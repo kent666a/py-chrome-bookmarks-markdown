@@ -1,9 +1,7 @@
 # py-chrome-bookmarks-markdown
+python导出chrome书签到markdown文件
 
-python导出chrome书签到markdown文件或html文件
-
-本代码是在 https://github.com/bdesham/py-chrome-bookmarks 基础上改动了一些内容.
-感谢[Benjamin Esham](https://github.com/bdesham).
+本代码是在 https://github.com/bdesham/py-chrome-bookmarks 基础上改动了一些内容. 感谢[Benjamin Esham](https://github.com/bdesham).导出html文件可参考此项目。
 
 **本代码修改内容如下：**
 
