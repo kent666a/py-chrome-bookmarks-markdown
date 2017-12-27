@@ -26,8 +26,7 @@ output_file_template = """
 
 # 如需本地调试可注释掉这一段 START
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-                                 description="Convert Google Chrome's bookmarks file to the standard HTML-based format.",
-                                 epilog="(c) 2011, 2017 Benjamin D. Esham\nhttps://github.com/bdesham/py-chrome-bookmarks")
+                                 description="python导出chrome书签到markdown文件.")
 parser.add_argument("input_file", type=argparse.FileType('r', encoding='utf-8'), nargs="?",
                     help="读取书签的位置,可以指定文件位置(相对路径，绝对路径都可以),非必填,默认为Chrome的默认书签位置")
 parser.add_argument("output_file", type=argparse.FileType('w', encoding='utf-8'),
