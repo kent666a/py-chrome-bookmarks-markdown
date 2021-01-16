@@ -6,7 +6,7 @@ from os import environ
 from os.path import expanduser
 
 # Filter to exclude links and directory names
-filter_name_list = {'My work', '书签栏', 'websites'}
+filter_name_list = {"My work", "书签栏", "websites"}
 
 output_file_template = """
 # Chrome bookmarks
@@ -19,7 +19,7 @@ output_file_template = """
 
 html_escape_table = {
     "&": "&amp;",
-    '"': "&quot;",
+    "\"": "&quot;",
     "'": "&#39;",
     ">": "&gt;",
     "<": "&lt;",
@@ -28,9 +28,9 @@ html_escape_table = {
 # 如需本地调试可注释掉这一段 START
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
                                  description="python导出chrome书签到markdown文件.")
-parser.add_argument("input_file", type=argparse.FileType('r', encoding='utf-8'), nargs="?",
+parser.add_argument("input_file", type=argparse.FileType("r", encoding="utf-8"), nargs="?",
                     help="读取书签的位置,可以指定文件位置(相对路径，绝对路径都可以),非必填,默认为Chrome的默认书签位置")
-parser.add_argument("output_file", type=argparse.FileType('w', encoding='utf-8'),
+parser.add_argument("output_file", type=argparse.FileType("w", encoding="utf-8"),
                     help="读取书签的位置,可以指定文件位置(相对路径，绝对路径都可以),必填")
 
 args = parser.parse_args()
@@ -48,11 +48,11 @@ else:
         input_filename = environ["LOCALAPPDATA"] + \
             r"\Google\Chrome\User Data\Default\Bookmarks"
     else:
-        print('Your system ("{}") is not recognized. Please specify the input file manually.'.format(system()))
+        print("Your system (\"{}\") is not recognized. Please specify the input file manually.".format(system()))
         exit(1)
 
     try:
-        input_file = open(input_filename, 'r', encoding='utf-8')
+        input_file = open(input_filename, "r", encoding="utf-8")
     except IOError as e:
         if e.errno == 2:
             print("The bookmarks file could not be found in its default location ({}). ".format(e.filename) +
@@ -64,10 +64,10 @@ output_file = args.output_file
 # 如需本地调试可注释掉这一段 END
 
 # 本地调试可以指定文件名测试 START
-# input_filename = 'C:/Users/Administrator/AppData/Local/Google/Chrome/User Data/Default/Bookmarks'
-# input_file = open(input_filename, 'r', encoding='utf-8')
-# output_file_name = 'test2.md'
-# output_file = open(output_file_name, 'w', encoding='utf-8')
+# input_filename = "C:/Users/Administrator/AppData/Local/Google/Chrome/User Data/Default/Bookmarks"
+# input_file = open(input_filename, "r", encoding="utf-8")
+# output_file_name = "test2.md"
+# output_file = open(output_file_name, "w", encoding="utf-8")
 # 本地调试可以指定文件名测试 END
 
 # 目录
@@ -75,56 +75,62 @@ catelog = list()
 
 
 def html_escape(text):
-    return ''.join(html_escape_table.get(c, c) for c in text)
+    return "".join(html_escape_table.get(c, c) for c in text)
 
 
 def html_for_node(node, lvl):
     # 判断url和children即判断是否包含在文件夹中
-    if 'url' in node:
+    if "url" in node:
         return html_for_url_node(node)
-    elif 'children' in node:
+    elif "children" in node:
         lvl = lvl + 1
         return html_for_parent_node(node, lvl)
     else:
-        return ''
+        return ""
 
 
 def html_for_url_node(node):
-    if not match("javascript:", node['url']):
-        return '- [{}]({})\n'.format(node['name'], node['url'])
+    if not match("javascript:", node["url"]):
+        return "- [{}]({})\n".format(node["name"], node["url"])
     else:
-        return ''
+        return ""
 
 
 def html_for_parent_node(node, lvl):
-    return '{0}\n\n{1}\n'.format(filter_catelog_name(node, lvl),
-                                 ''.join([filter_name(n, lvl) for n in node['children']]))
+    return "{0}\n\n{1}\n".format(filter_catelog_name(node, lvl),
+                                 "".join([filter_name(n, lvl) for n in node["children"]]))
 
 
 # 过滤文件夹
 def filter_name(n, lvl):
-    if n['name'] in filter_name_list:
-        return ''
+    if n["name"] in filter_name_list:
+        return ""
     else:
         return html_for_node(n, lvl)
 
 
 # 过滤目录名
 def filter_catelog_name(n, lvl):
-    if n['name'] in filter_name_list:
-        return ''
+    if n["name"] in filter_name_list:
+        return ""
     else:
-        catelog.append(('{0}- [{1}](#{2})\n').format('  ' *
-                                                     (lvl - 1), n['name'], n['name'].replace(" ", r"-")))
-        return ('{0} {1}').format('#' * (lvl + 1), n['name'])
+        catelog.append(
+            ("{0}- [{1}](#{2})\n")
+                .format(
+                    "  " * (lvl - 1),
+                    n["name"],
+                    n["name"].lower().replace(" ", r"-").replace("!", r"")
+                )
+            )
+        return ("{0} {1}").format("#" * (lvl + 1), n["name"])
 
 
 contents = loads(input_file.read())
 input_file.close()
 
-bookmark_bar = html_for_node(contents['roots']['bookmark_bar'], 0)
-other = html_for_node(contents['roots']['other'], 0)
-catelog_str = ''.join(a for a in catelog)
+bookmark_bar = html_for_node(contents["roots"]["bookmark_bar"], 0)
+other = html_for_node(contents["roots"]["other"], 0)
+catelog_str = "".join(a for a in catelog)
 
 output_file.write(output_file_template.format(
     catelog=catelog_str, bookmark_bar=bookmark_bar, other=other))
