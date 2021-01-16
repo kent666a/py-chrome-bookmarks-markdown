@@ -5,8 +5,17 @@ from re import match
 from os import environ
 from os.path import expanduser
 
-# 过滤name
+# Filter to exclude links and directory names
 filter_name_list = {'My work', '书签栏', 'websites'}
+
+output_file_template = """
+# Chrome bookmarks
+
+{catelog}
+{bookmark_bar}
+
+{other}
+"""
 
 html_escape_table = {
     "&": "&amp;",
@@ -15,14 +24,6 @@ html_escape_table = {
     ">": "&gt;",
     "<": "&lt;",
 }
-
-output_file_template = """
-<h3>书签目录</h3>
-{catelog}
-{bookmark_bar}
-
-{other}
-"""
 
 # 如需本地调试可注释掉这一段 START
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -38,11 +39,14 @@ if args.input_file:
     input_file = args.input_file
 else:
     if system() == "Darwin":
-        input_filename = expanduser("~/Library/Application Support/Google/Chrome/Default/Bookmarks")
+        input_filename = expanduser(
+            "~/Library/Application Support/Google/Chrome/Default/Bookmarks")
     elif system() == "Linux":
-        input_filename = expanduser("~/.config/google-chrome/Default/Bookmarks")
+        input_filename = expanduser(
+            "~/.config/google-chrome/Default/Bookmarks")
     elif system() == "Windows":
-        input_filename = environ["LOCALAPPDATA"] + r"\Google\Chrome\User Data\Default\Bookmarks"
+        input_filename = environ["LOCALAPPDATA"] + \
+            r"\Google\Chrome\User Data\Default\Bookmarks"
     else:
         print('Your system ("{}") is not recognized. Please specify the input file manually.'.format(system()))
         exit(1)
@@ -74,12 +78,13 @@ def html_escape(text):
     return ''.join(html_escape_table.get(c, c) for c in text)
 
 
-def html_for_node(node):
+def html_for_node(node, lvl):
     # 判断url和children即判断是否包含在文件夹中
     if 'url' in node:
         return html_for_url_node(node)
     elif 'children' in node:
-        return html_for_parent_node(node)
+        lvl = lvl + 1
+        return html_for_parent_node(node, lvl)
     else:
         return ''
 
@@ -91,33 +96,35 @@ def html_for_url_node(node):
         return ''
 
 
-def html_for_parent_node(node):
-    return '{0}\n\n{1}\n'.format(filter_catelog_name(node),
-                                 ''.join([filter_name(n) for n in node['children']]))
+def html_for_parent_node(node, lvl):
+    return '{0}\n\n{1}\n'.format(filter_catelog_name(node, lvl),
+                                 ''.join([filter_name(n, lvl) for n in node['children']]))
 
 
 # 过滤文件夹
-def filter_name(n):
+def filter_name(n, lvl):
     if n['name'] in filter_name_list:
         return ''
     else:
-        return html_for_node(n)
+        return html_for_node(n, lvl)
 
 
 # 过滤目录名
-def filter_catelog_name(n):
+def filter_catelog_name(n, lvl):
     if n['name'] in filter_name_list:
         return ''
     else:
-        catelog.append('- [{0}](#{0})\n'.format(n['name']))
-        return '<h4 id={0}>{0}</h4>'.format(n['name'])
+        catelog.append(('{0}- [{1}](#{2})\n').format('  ' *
+                                                     (lvl - 1), n['name'], n['name'].replace(" ", r"-")))
+        return ('{0} {1}').format('#' * (lvl + 1), n['name'])
 
 
 contents = loads(input_file.read())
 input_file.close()
 
-bookmark_bar = html_for_node(contents['roots']['bookmark_bar'])
-other = html_for_node(contents['roots']['other'])
+bookmark_bar = html_for_node(contents['roots']['bookmark_bar'], 0)
+other = html_for_node(contents['roots']['other'], 0)
 catelog_str = ''.join(a for a in catelog)
 
-output_file.write(output_file_template.format(catelog=catelog_str, bookmark_bar=bookmark_bar, other=other))
+output_file.write(output_file_template.format(
+    catelog=catelog_str, bookmark_bar=bookmark_bar, other=other))
